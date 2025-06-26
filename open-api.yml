@@ -1,0 +1,594 @@
+openapi: 3.0.4
+info:
+  title: EasyShop Products Apis definition
+  description: |
+            # About us 
+            
+            ***EasyShop*** is an open market product selling company. Any website can list products using our _APIs_.Shipping and other logistics will be taken care by us. You will get an `Affiliate commission` for selling products.
+            
+            # Categories Supported
+              - Mobiles
+                - Apple
+                - Samsung
+                - OnePlus
+              - Laptops
+                - Dell
+                - Acer
+                - Asus
+                - Apple
+              - TV
+              - Headphones
+              
+          
+  termsOfService: https://easyshop.com/terms
+  version: 1.0.0
+  
+  contact:
+    name: API Support
+    url: https://www.easyshop.com/support
+    email: me@me.com
+  
+  license:
+    name: EasyShop Liscence
+    url: https://www.easyshop.com/liscences/LISCENCE-2.0.html
+  x-custom-info:
+    comments: Some dummy comments which wont display on swagger ui
+    developer:
+      - name: John Doe
+        email : john@doe.com
+      - name: Jane Doe
+        email: jane@doe.com
+externalDocs:
+  description: External Documentation Links
+  url: http://abcd.com
+  x-comment: The above provided info will be displayed as hyperlink in swagger ui except this comment
+  
+servers:
+  - url: http://localhost:8090/v1
+    description: local server url
+    
+  - url : http://dev.abcd.com/v1
+    description: dev url
+    
+  - url: https://{username}.server.com:{port}/{version}
+    variables:
+      username:
+        default: demo
+        description: This value is assigned by service provider
+      port:
+        enum:
+          - "8443"
+          - "443"
+        default: "8443"
+      version:
+        default: v1
+tags:
+  - name: Categories
+    description: related operations
+  - name: Products
+    description: related operations
+  - name: Orders
+    description: related operations
+x-security-tag-info: | 
+     These auth provided here are aplicable for all the existing apis as it is at the root level
+     If you wan to specify any one on a particular path then use the same security tag and define which one to use at that api level.(The security tag used at root level is optional. it is mentioned here just to show how it can be used at root level.)
+     We need to deign security here and mandatorily we need to add schem'es' not schem'a'; in component.
+     Path-> components.securitySchemes
+     If we dont want to define any security for a particular path we can simply define a tag with empty brackets .. security: [] this will override the default root level security config if any
+security:
+ 
+  - BasicAuth: []
+  - BearerAuth: []
+  - ApiKeyAuth: []
+  - OAuth2AuthCode: 
+    - read
+    - write
+    - admin
+  - OpenId:
+    - read
+    - write
+    - admin
+
+paths: 
+  /categories:
+    get:
+      tags: 
+        - Categories
+      summary: List all categories
+      description: Returns a list of categories supported by website.
+      operationId: getCategories
+      security: 
+        - BasicAuth: []
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          required: false
+           # example: 101
+          examples:
+            mobiles:
+              value: 101
+            laptops:
+              value: 102
+            tv:
+              value: 103
+            headphones:
+              value: 104
+      responses:
+        '200':
+          description: A list of categories
+          content:
+            application/json: 
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+              examples:
+                all-categories-data:
+                  summary: Categories example data
+                  value:
+                    - categoryId: 101
+                      categoryName: Mobiles
+                    - categoryId: 102
+                      categoryName: Laptops
+                    - categoryId: 103
+                      categoryName: TV
+                    - categoryId: 104
+                      categoryName: Headphones
+                single-category-data:
+                  summary: Single Category Data
+                  value:
+                    - categoryId: 101
+                      categoryName: Mobiles
+          links:
+            GetCategoryById:
+              $ref: "#/components/links/GetCategoryById"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+          
+  /categories/{categoryId}:
+    get:
+      tags: 
+        - Categories
+      summary: get one category by Id
+      description: Provide the category Id and get one category linked ot that id(if present)
+      operationId: getCategoryById
+      security: []
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: A category object with id and name
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+          
+  /products:
+    get:
+      tags: 
+        - Products
+      summary: list all products
+      description: | 
+        list all products supported by easy shop
+      operationId: getProducts
+      parameters:
+          - name: productId
+            in: query
+            schema:
+              type: integer
+              minimum: 1
+              maximum: 1000
+            example: 102
+      responses:
+        '200':
+          description: list all products
+          content:
+            applicaiton/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+              examples:
+                products-data:
+                  summary: Products example data
+                  value:
+                    - productId: 101
+                      name: Apple IPhone 15 Pro
+                      price: 999.99
+                      categoryName: Mobiles
+                      quantity: 96  (this is in stock count)
+                    - productId: 102
+                      name: Samsung S24 
+                      price: 899.49
+                      categoryName: Mobiles
+                      quantity: 100 
+                    - productId: 103
+                      name: OnePlus 13 Pro
+                      price: 799.79
+                      categoryName: Mobiles
+                      quantity: 80
+                    - productId: 104
+                      name: Razr Phone
+                      price: 1299.90
+                      categoryName: Mobiles
+                      quantity: 50
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+                    
+  /products/{productId}:
+    get:
+      tags: 
+        - Products
+      summary: get one product by product Id
+      description: pass in productyId in url and get a product based on id
+      operationId: getProductById
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          example: 102
+      responses:
+        '200':
+          description: List a product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /orders:
+    get:
+      tags: 
+        - Orders
+      summary: Get the order details
+      description: Display the order details by Id
+      parameters:
+          - $ref: "#/components/parameters/orderIdQueryParam"
+      operationId: getOrders
+      responses:
+        '200':
+          description: Order details fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+                  product:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  address:
+                    $ref: "#/components/schemas/Address"
+                    # type: object
+                    # properties:
+                    #   addressLane:
+                    #     type: string
+                    #   city:
+                    #     type: string
+                    #   state:
+                    #     type: string
+                    #   zipCode:
+                    #     type: string
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags: 
+        - Orders
+      summary: Place order
+      description: Place order
+      operationId: saveNewOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                products:
+                  type: array
+                  items:
+                    $ref:  "#/components/schemas/Product"
+                address:
+                 $ref: "#/components/schemas/Address"
+      responses:
+        '201':
+          description: Order places successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+          links:
+            GetOrderById:
+              $ref: "#/components/links/GetOrderById"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags: 
+        - Orders
+      summary: This is to update the product in orders
+      description: this endpoint helps modifying the order details
+      operationId: updateOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId:
+                  type: integer
+                products:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Product"
+                address:
+                  $ref: "#/components/schemas/Address"
+      responses:
+        '200':
+          description: Updated order details successfully
+          content:
+            applicaation/json:
+              schema:
+                type: object
+                properties:
+                  objectId:
+                    type: string
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags: 
+        - Orders
+      summary: This is to delete the order
+      description: Deleting the order based on orderId
+      operationId: deleteOrderById
+      parameters:
+        - $ref: "#/components/parameters/orderIdQueryParam"
+      responses:
+        '204':
+          description: Deleted order details successfully
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /orders/{orderId}:
+    get:
+      summary: Get order BY orderId
+      description: Get order by Id
+      operationId: getOrderByOrderId
+      deprecated: true
+      tags:
+        - Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          examples:
+            example1:
+              value: 101
+      responses:
+        '200':
+          description: fetched orders successfully
+          content:
+            application/json:
+              schema:
+                properties:
+                  Products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  Address:
+                    $ref: "#/components/schemas/Address"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+  /ordersOneOf:
+    post:
+      summary: Post any one of the types or product
+      description: Product to be poseted should be of type Laptop or Mobile
+      tags:
+        - Orders
+      operationId: usingOneOf
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                product:
+                  type: object
+                  oneOf:
+                    - $ref: "#/components/schemas/Mobile" 
+                    - $ref: "#/components/schemas/Laptop"
+                address:
+                  $ref: "#/components/schemas/Address"
+              required: [product,address]
+      responses:
+        '200':
+          description: Order placed successfully
+  /anyOfOrder:
+    get:
+      summary: Get Order details
+      description: Get order details
+      operationId: getOperationUsingAnyOf
+      parameters:
+        - $ref: "#/components/parameters/orderIdQueryParam"
+        - name: fetchType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - summary
+              - details
+          description: >
+            Fetch Type:
+              * `summary`: Will Provide Order summary
+              * `details`:  Will provide Order summary and Order Address
+      responses:
+        '200':
+          description: Fetch successful
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/OrderSummary"
+                  - $ref: "#/components/schemas/OrderAddress"
+
+    
+          
+components:
+  parameters:
+    orderIdQueryParam:
+      name: orderId
+      in: query
+      required: true
+      schema:
+        type: integer
+      example: 101
+  schemas:
+    Address:
+      type: object
+      properties:
+        addressLane:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+          enum:
+            - Texas
+            - Indiana
+            - California
+            - NewYork
+        zipCode:
+          type: string
+        isOfficeAddress:
+          type: boolean
+      required: [addressLane,city,state,zipCode]
+    Product:
+      type: object
+      properties:
+        productId:
+          type: integer
+        name:
+          type: string
+        price:
+          type: number
+          format: float 
+        categoryName:
+          type: string
+          nullable: true
+        releaseDate:
+          type: string
+          format: date
+          readOnly: true
+        quantity:
+          type: integer
+          description: |
+            ***Quantity*** represents `stock` value when this field is being sent to EazyShop.Where as in the scenarios of consumer sending this field, it represents `number of product items` inside the order.Consumers are expected to handle the scenario of stopping the end user <u>*when the stock value is 0*</u>
+      required: [productId,name,price,quantity]
+    Category:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+          
+    Mobile:
+      allOf:
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          properties:
+            networkType:
+              type: string
+              enum:
+                - 4G
+                - 5G
+          required: [networkType]
+    Laptop:
+      allOf: 
+        - $ref: "#/components/schemas/Product"
+        - type: object
+          properties:
+            ram:
+              type: string
+              enum:
+                - 4 GB
+                - 8 GB
+                - 16 GB
+          required: [ram]
+          
+    OrderSummary:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+    OrderAddress:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        address:
+          $ref: "#/components/schemas/Address"
+  responses:
+    InternalServerError:
+      description: | 
+                  An error occurrred while processing the request.
+                  Plase contact support@EazyShop.com 
+  links:
+    GetCategoryById:
+      operationId: getCategoryById
+      parameters:
+        categoryId: "$response.body#/categoryId"
+    GetOrderById:
+      operationId: GetOrderById
+      parameters:
+        orderId: "$response.body#/orderId"
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+    OAuth2AuthCode:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize
+          tokenUrl: https://example.com/api/oauth.access
+          scopes:
+            read: Read access only
+            write: Write access only
+            admin: Admin access
+    OpenId:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
